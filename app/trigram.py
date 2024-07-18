@@ -26,7 +26,6 @@ class TrigramLanguageModel(nn.Module):
         loss = F.cross_entropy(logits, targets)
         return logits, loss
 
-    @torch.no_grad
     def generate(self, idx, max_new_tokens):
         for _ in range(max_new_tokens):
             logits, loss = self(idx)
