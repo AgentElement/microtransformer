@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 class BigramLanguageModel(nn.Module):
 
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size, params):
         super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
         self.vocab_size = vocab_size

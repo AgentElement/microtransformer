@@ -4,6 +4,7 @@ from torch.nn import functional as F
 
 from app.trigram import TrigramLanguageModel
 from app.bigram import BigramLanguageModel
+from app.transformer import Transformer
 
 torch.manual_seed(1337)
 
@@ -15,13 +16,13 @@ class Hyperparams:
     training_steps = 10000
     eval_iters = 100
     lr = 1e-3
-
+    n_embed = 32
 
 def main():
     with open("input.txt") as input:
         text = input.read()
 
-    train_model(BigramLanguageModel, text)
+    train_model(Transformer, text)
 
 
 def train_model(model, text):
@@ -38,7 +39,7 @@ def train_model(model, text):
     train_data = data[:n]
     val_data = data[n:]
 
-    m = model(len(chars))
+    m = model(len(chars), Hyperparams)
 
     idx = torch.zeros((1, 1), dtype=torch.long)
     optimizer = torch.optim.AdamW(m.parameters(), lr=Hyperparams.lr)
@@ -56,13 +57,14 @@ def train_model(model, text):
     print(decode(m.generate(idx, max_new_tokens=1000)[0].tolist()))
 
 
-
 def get_batch(data, block_size, batch_size):
     ix = torch.randint(len(data) - block_size, (batch_size,))
     x = torch.stack([data[i:i+block_size] for i in ix])
     y = torch.stack([data[i+1:i+block_size+1] for i in ix])
     return x, y
 
+
+@torch.no_grad()
 def esitmate_loss(model, data, params):
     model.eval()
     losses = torch.zeros(params.eval_iters)
