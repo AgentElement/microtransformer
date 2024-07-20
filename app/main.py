@@ -17,6 +17,8 @@ class Hyperparams:
     eval_iters = 100
     lr = 1e-3
     n_embed = 32
+    n_head = 6
+    n_layers = 4
 
 def main():
     with open("input.txt") as input:
@@ -47,6 +49,8 @@ def train_model(model, text):
     for steps in range(40000):
         xb, yb = get_batch(train_data, Hyperparams.block_size, Hyperparams.batch_size)
         logits, loss = m(xb, yb)
+        if steps % 1000 == 0:
+            print(loss)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
