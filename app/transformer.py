@@ -79,7 +79,7 @@ class Block(nn.Module):
 
     def forward(self, x):
         x = x + self.sa_heads(self.ln1(x))
-        x = x + self.ffd(self.ln1(x))
+        x = x + self.ffd(self.ln2(x))
         return x
 
 
@@ -134,7 +134,3 @@ class Transformer(nn.Module):
             idx_next = torch.multinomial(probs, num_samples=1)
             idx = torch.cat((idx, idx_next), dim=1)
         return idx
-
-
-if __name__ == '__main__':
-    main()
