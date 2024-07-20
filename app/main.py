@@ -10,22 +10,20 @@ torch.manual_seed(1337)
 
 
 class Hyperparams:
-    block_size = 8
-    batch_size = 4
+    block_size = 128
+    batch_size = 32
     test_train_split = 0.9
     training_steps = 10000
     eval_iters = 100
-    lr = 1e-3
-    n_embed = 32
-    n_head = 6
-    n_layers = 4
+    lr = 3e-4
+    n_embed = 80
+    n_layers = 5
+    n_head = 5
+    dropout = 0.2
 
-def main():
-    with open("input.txt") as input:
-        text = input.read()
 
-    train_model(Transformer, text)
-
+def param_size(model):
+    return sum(p.numel() for p in model.parameters())
 
 def train_model(model, text):
     chars = sorted(list(set(text)))
@@ -42,15 +40,16 @@ def train_model(model, text):
     val_data = data[n:]
 
     m = model(len(chars), Hyperparams)
+    print(f"Parameter size: {param_size(m)}")
 
     idx = torch.zeros((1, 1), dtype=torch.long)
     optimizer = torch.optim.AdamW(m.parameters(), lr=Hyperparams.lr)
 
-    for steps in range(40000):
+    for steps in range(Hyperparams.training_steps):
         xb, yb = get_batch(train_data, Hyperparams.block_size, Hyperparams.batch_size)
         logits, loss = m(xb, yb)
         if steps % 1000 == 0:
-            print(loss)
+            print(f"Iteration {steps} loss: {loss.item()}")
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
@@ -59,6 +58,8 @@ def train_model(model, text):
     print(loss.item())
     print(esitmate_loss(m, val_data, Hyperparams))
     print(decode(m.generate(idx, max_new_tokens=1000)[0].tolist()))
+    
+    return m
 
 
 def get_batch(data, block_size, batch_size):
@@ -77,6 +78,14 @@ def esitmate_loss(model, data, params):
         logits, loss = model(X, Y)
         losses[k] = loss.item()
     return losses.mean()
+
+
+def main():
+    with open("input.txt") as input:
+        text = input.read()
+    model = train_model(Transformer, text)
+    params = param_size(model)
+    torch.save(model, f"model-{params}.pt")
 
 
 if __name__ == '__main__':
