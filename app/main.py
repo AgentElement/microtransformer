@@ -1,6 +1,4 @@
 import torch
-import torch.nn as nn
-from torch.nn import functional as F
 
 from app.trigram import TrigramLanguageModel
 from app.bigram import BigramLanguageModel
@@ -10,28 +8,29 @@ torch.manual_seed(1337)
 
 
 class Hyperparams:
-    block_size = 128
-    batch_size = 32
+    block_size = 64  # T
+    batch_size = 16  # B
     test_train_split = 0.9
     training_steps = 10000
     eval_iters = 100
-    lr = 3e-4
-    n_embed = 80
+    lr = 1e-3
+    n_embed = 60  # C
     n_layers = 5
-    n_head = 5
+    n_head = 5  # H
     dropout = 0.2
 
 
 def param_size(model):
     return sum(p.numel() for p in model.parameters())
 
+
 def train_model(model, text):
     chars = sorted(list(set(text)))
 
-    stoi = { ch:i for i,ch in enumerate(chars) }
-    itos = { i:ch for i,ch in enumerate(chars) }
+    stoi = {ch: i for i, ch in enumerate(chars)}
+    itos = {i: ch for i, ch in enumerate(chars)}
     encode = lambda s: [stoi[c] for c in s]
-    decode = lambda l: ''.join([itos[i] for i in l])
+    decode = lambda l: "".join([itos[i] for i in l])
 
     data = torch.tensor(encode(text), dtype=torch.long)
 
@@ -49,23 +48,24 @@ def train_model(model, text):
         xb, yb = get_batch(train_data, Hyperparams.block_size, Hyperparams.batch_size)
         logits, loss = m(xb, yb)
         if steps % 1000 == 0:
-            print(f"Iteration {steps} loss: {loss.item()}")
+            train_loss = loss.item()
+            val_loss = esitmate_loss(m, val_data, Hyperparams).item()
+            print(f"Iteration {steps} loss: {train_loss}, val: {val_loss}")
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
 
-
-    print(loss.item())
-    print(esitmate_loss(m, val_data, Hyperparams))
+    print("Final training loss: ", loss.item())
+    print("Final validation loss: ", esitmate_loss(m, val_data, Hyperparams).item())
     print(decode(m.generate(idx, max_new_tokens=1000)[0].tolist()))
-    
+
     return m
 
 
 def get_batch(data, block_size, batch_size):
     ix = torch.randint(len(data) - block_size, (batch_size,))
-    x = torch.stack([data[i:i+block_size] for i in ix])
-    y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+    x = torch.stack([data[i : i + block_size] for i in ix])
+    y = torch.stack([data[i + 1 : i + block_size + 1] for i in ix])
     return x, y
 
 
@@ -88,5 +88,5 @@ def main():
     torch.save(model, f"model-{params}.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

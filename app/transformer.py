@@ -4,7 +4,6 @@ from torch.nn import functional as F
 
 
 class Head(nn.Module):
-
     def __init__(self, head_size, params):
         super().__init__()
 
@@ -16,17 +15,16 @@ class Head(nn.Module):
         self.value = nn.Linear(n_embed, head_size, bias=False)
         self.dropout = nn.Dropout(params.dropout)
         tril = torch.tril(torch.ones(block_size, block_size))
-        self.register_buffer('tril', tril)
+        self.register_buffer("tril", tril)
 
-    
     def forward(self, inputs):
         B, T, C = inputs.shape
         k = self.key(inputs)
         q = self.query(inputs)
         v = self.value(inputs)
 
-        wei = q @ k.transpose(-2, -1) * C ** -0.5
-        wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
+        wei = q @ k.transpose(-2, -1) * C**-0.5
+        wei = wei.masked_fill(self.tril[:T, :T] == 0, float("-inf"))
         wei = F.softmax(wei, dim=-1)
         wei = self.dropout(wei)
 
@@ -58,7 +56,7 @@ class FeedForward(nn.Module):
             nn.Linear(n_embed, 4 * n_embed),
             nn.ReLU(),
             nn.Linear(4 * n_embed, n_embed),
-            nn.Dropout(params.dropout)
+            nn.Dropout(params.dropout),
         )
 
     def forward(self, x):
@@ -66,7 +64,6 @@ class FeedForward(nn.Module):
 
 
 class Block(nn.Module):
-
     def __init__(self, params):
         super().__init__()
         n_embed = params.n_embed
@@ -84,7 +81,6 @@ class Block(nn.Module):
 
 
 class Transformer(nn.Module):
-
     def __init__(self, vocab_size, params):
         super().__init__()
 
@@ -96,12 +92,10 @@ class Transformer(nn.Module):
         self.position_embedding_table = nn.Embedding(self.block_size, n_embed)
 
         self.blocks = nn.Sequential(
-            *[Block(params) for _ in range(params.n_layers)],
-            nn.LayerNorm(n_embed)
+            *[Block(params) for _ in range(params.n_layers)], nn.LayerNorm(n_embed)
         )
-        
-        self.lm_head = nn.Linear(n_embed, vocab_size)
 
+        self.lm_head = nn.Linear(n_embed, vocab_size)
 
     def forward(self, inputs, targets=None):
         B, T = inputs.shape
@@ -123,11 +117,10 @@ class Transformer(nn.Module):
 
         return logits, loss
 
-
     def generate(self, idx, max_new_tokens):
         for _ in range(max_new_tokens):
             _, ix_len = idx.shape
-            tidx = idx[:, -min(self.block_size, ix_len):]
+            tidx = idx[:, -min(self.block_size, ix_len) :]
             logits, loss = self(tidx)
             logits = logits[:, -1, :]
             probs = F.softmax(logits, dim=-1)

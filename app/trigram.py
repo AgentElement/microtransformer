@@ -2,18 +2,19 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-class TrigramLanguageModel(nn.Module):
 
+class TrigramLanguageModel(nn.Module):
     def __init__(self, vocab_size, params):
         super().__init__()
-        self.token_embedding_table = nn.Embedding(vocab_size * (vocab_size + 1), 
-                                                  vocab_size)
+        self.token_embedding_table = nn.Embedding(
+            vocab_size * (vocab_size + 1), vocab_size
+        )
         self.vocab_size = vocab_size
 
     def forward(self, inputs, targets=None):
         x, y = inputs.shape
         padding = torch.zeros(x, 1, dtype=torch.long)
-        offset_inputs = torch.cat((padding, inputs[:, 0:y-1]), dim=1)
+        offset_inputs = torch.cat((padding, inputs[:, 0 : y - 1]), dim=1)
         idx = (inputs + 1) * self.vocab_size + offset_inputs
         logits = self.token_embedding_table(inputs)
 
