@@ -2,7 +2,7 @@
 
 This is a small and very simple transformer, almost exactly like Karpathy's [minGPT](https://github.com/karpathy/minGPT), the predecessor to nanoGPT.
 
-This transformer trains on a text dump of all of Shakespeare's text. To run the training step, first activate the flake (`nix develop .`),
+This transformer trains on a text dump of all of Shakespeare's text. To run the training loop, first activate the flake (`nix develop .`),
 then run `python -m app.main`. The script will read `input.txt` (the training data) and write out a passable language model to `model-paramcount.pt`.
 
 The model only sits in one file: `app/transformer.py`.
